@@ -13,6 +13,7 @@ export default async function Home() {
         quality={100}
         src={imageUrl}
         alt="Bing Photo of the Day"
+        priority
       />
     </div>
   );
