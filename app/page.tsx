@@ -23,8 +23,8 @@ export default async function Home() {
 
 async function getData() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/bing`, {
-    // allow client to cache request for 6 hours
-    next: { revalidate: 60 * 60 * 6 },
+    // allow client to cache request for 5 hours
+    next: { revalidate: 60 * 60 * 5 },
   });
 
   if (!res.ok) {
