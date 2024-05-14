@@ -8,19 +8,24 @@ export default async function Home() {
   return (
     <div>
       <Image
-        layout="fill"
-        objectFit="cover"
+        fill
         quality={100}
         src={imageUrl}
         alt="Bing Photo of the Day"
         priority
+        style={{
+          objectFit: "cover",
+        }}
       />
     </div>
   );
 }
 
 async function getData() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/bing`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/bing`, {
+    // allow client to cache request for 6 hours
+    next: { revalidate: 60 * 60 * 6 },
+  });
 
   if (!res.ok) {
     throw new Error("Failed to fetch data");
