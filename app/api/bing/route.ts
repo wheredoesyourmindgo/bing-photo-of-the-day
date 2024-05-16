@@ -1,5 +1,5 @@
 // app/api/bing/route.ts
-import type { NextApiRequest, NextApiResponse } from "next";
+const dynamic = "force-dynamic";
 
 // this doesn't work, see https://github.com/vercel/next.js/issues/52350
 // export const dynamic = "force-dynamic";
@@ -7,10 +7,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 export async function GET() {
   try {
     const response = await fetch(
-      "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1",
-      {
-        cache: "no-store",
-      }
+      "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1"
     );
     const data = await response.json();
     const imageUrl = `https://www.bing.com${data.images[0].url}`;
