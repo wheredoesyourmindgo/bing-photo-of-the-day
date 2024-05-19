@@ -1,12 +1,12 @@
 // app/api/bing/route.ts
 
-// import { unstable_noStore } from "next/cache";
+import { unstable_noStore } from "next/cache";
 
 // this doesn't work, see https://github.com/vercel/next.js/issues/52350
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // unstable_noStore();
+  unstable_noStore();
   try {
     const response = await fetch(
       "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1"
