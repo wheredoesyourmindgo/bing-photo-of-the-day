@@ -33,7 +33,7 @@ async function getData() {
     // allow cache for 5 hours
     {
       next: { revalidate: 60 * 60 * 5 },
-    }
+    },
   );
 
   if (!res.ok) {
