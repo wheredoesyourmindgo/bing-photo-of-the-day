@@ -5,9 +5,10 @@
   "author": "wheredoesyourmindgo <moemanchu@icloud.com>",
   "license": "MIT",
   "dependencies": {
-    "next": "^14.2.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "babel-plugin-react-compiler": "0.0.0-experimental-592953e-20240517",
+    "next": "15.0.0-rc.0",
+    "react": "19.0.0-rc-935180c7e0-20240524",
+    "react-dom": "19.0.0-rc-935180c7e0-20240524"
   },
   "devDependencies": {
     "@types/react": "18.3.3",
