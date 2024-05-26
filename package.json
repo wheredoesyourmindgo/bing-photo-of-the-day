@@ -25,6 +25,7 @@
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "format": "prettier --write .",
-    "lint": "next lint"
+    "lint": "next lint",
+    "upgrade-interactive": "ncu -i -m"
   }
 }
