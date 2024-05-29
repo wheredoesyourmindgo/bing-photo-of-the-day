@@ -1,0 +1,30 @@
+{
+  "name": "bing-photo-of-the-day",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "wheredoesyourmindgo <moemanchu@icloud.com>",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^14.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.3",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5",
+    "vercel": "^34.2.3"
+  },
+  "scripts": {
+    "start": "next start",
+    "build": "next build",
+    "dev": "next dev",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "format": "prettier --write .",
+    "lint": "next lint",
+    "upgrade-interactive": "ncu -i -m"
+  }
+}
