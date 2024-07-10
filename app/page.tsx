@@ -32,8 +32,11 @@ async function getData() {
     // { cache: "no-store" }
     // allow cache for 5 hours
     {
+      headers: {
+        "Cache-Control": `s-maxage=0, stale-while-revalidate=${60 * 60 * 5}`,
+      },
       next: { revalidate: 60 * 60 * 5 },
-    },
+    }
   );
 
   if (!res.ok) {
