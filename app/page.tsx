@@ -30,12 +30,12 @@ async function getData() {
     "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1",
     // this opts out of caching too
     // { cache: "no-store" }
-    // allow cache for 5 hours
     {
-      // unclear if setting cache control headers helps
+      // unclear if setting cache control headers helps in regards to caching
       // headers: {
       //   "Cache-Control": `s-maxage=0, stale-while-revalidate=${60 * 60 * 5}`,
       // },
+      // allow cache for 5 hours
       next: { revalidate: 60 * 60 * 5 }, // 5 hours
     }
   );
