@@ -2,6 +2,37 @@ import Image from "next/image";
 // this doesn't opt of caching as far as I can tell
 // export const dynamic = "force-dynamic";
 
+export interface BingImageArchiveResponse {
+  images:   Image[];
+  tooltips: Tooltips;
+}
+
+export interface Image {
+  startdate:     string;
+  fullstartdate: string;
+  enddate:       string;
+  url:           string;
+  urlbase:       string;
+  copyright:     string;
+  copyrightlink: string;
+  title:         string;
+  quiz:          string;
+  wp:            boolean;
+  hsh:           string;
+  drk:           number;
+  top:           number;
+  bot:           number;
+  hs:            any[];
+}
+
+export interface Tooltips {
+  loading:  string;
+  previous: string;
+  next:     string;
+  walle:    string;
+  walls:    string;
+}
+
 export default async function Home() {
   const data = await getData();
   const { imageUrl } = data;
@@ -26,7 +57,7 @@ async function getData() {
   // this opts out of caching
   // unstable_noStore();
 
-  const res = await fetch(
+  const res = await fetch<BingImageArchiveResponse>(
     "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1",
     // this opts out of caching too
     // { cache: "no-store" }
@@ -45,6 +76,7 @@ async function getData() {
   }
 
   const data = await res.json();
-  const imageUrl = `https://www.bing.com${data.images[0].url}`;
+  const [todaysImg] = data.images
+  const imageUrl = `https://www.bing.com${todaysImg.url}`;
   return { imageUrl };
 }
