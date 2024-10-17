@@ -3,34 +3,34 @@ import Image from "next/image";
 // export const dynamic = "force-dynamic";
 
 export interface BingImageArchiveResponse {
-  images:   Image[];
+  images: Image[];
   tooltips: Tooltips;
 }
 
 export interface Image {
-  startdate:     string;
+  startdate: string;
   fullstartdate: string;
-  enddate:       string;
-  url:           string;
-  urlbase:       string;
-  copyright:     string;
+  enddate: string;
+  url: string;
+  urlbase: string;
+  copyright: string;
   copyrightlink: string;
-  title:         string;
-  quiz:          string;
-  wp:            boolean;
-  hsh:           string;
-  drk:           number;
-  top:           number;
-  bot:           number;
-  hs:            any[];
+  title: string;
+  quiz: string;
+  wp: boolean;
+  hsh: string;
+  drk: number;
+  top: number;
+  bot: number;
+  hs: any[];
 }
 
 export interface Tooltips {
-  loading:  string;
+  loading: string;
   previous: string;
-  next:     string;
-  walle:    string;
-  walls:    string;
+  next: string;
+  walle: string;
+  walls: string;
 }
 
 export default async function Home() {
@@ -76,7 +76,7 @@ async function getData() {
   }
 
   const data = await res.json();
-  const [todaysImg] = data.images
+  const [todaysImg] = data.images;
   const imageUrl = `https://www.bing.com${todaysImg.url}`;
   return { imageUrl };
 }
