@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get("Authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
