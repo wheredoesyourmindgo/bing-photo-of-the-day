@@ -11,7 +11,7 @@ export async function GET(req: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    revalidatePath("/");
+    revalidatePath("/", "page");
     return new Response("Revalidation triggered", { status: 200 });
   } catch (error) {
     console.error("Revalidation error:", error);
