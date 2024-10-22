@@ -1,6 +1,4 @@
 import Image from "next/image";
-// this doesn't opt of caching as far as I can tell
-// export const dynamic = "force-dynamic";
 
 export interface BingImageArchiveResponse {
   images: Image[];
