@@ -62,3 +62,12 @@ node_modules/
 npm-debug.log
 yarn-error.log
 lerna-debug.log
+
+# yarn, see https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored for more info
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
