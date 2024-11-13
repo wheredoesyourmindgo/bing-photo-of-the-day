@@ -5,27 +5,30 @@
   "author": "wheredoesyourmindgo <moemanchu@icloud.com>",
   "license": "MIT",
   "dependencies": {
-    "next": "^14.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "next": "15.0.3",
+    "react": "19.0.0-rc-66855b96-20241106",
+    "react-dom": "19.0.0-rc-66855b96-20241106"
   },
   "devDependencies": {
-    "@types/react": "18.3.3",
+    "@types/react": "npm:types-react@19.0.0-rc.1",
     "eslint": "^8.57.0",
-    "eslint-config-next": "^14.2.5",
+    "eslint-config-next": "15.0.3",
     "prettier": "^3.3.3",
     "typescript": "^5.5.3",
-    "vercel": "^36.0.0"
+    "vercel": "^38.0.0"
   },
   "scripts": {
     "start": "next start",
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "format": "prettier --write .",
     "lint": "next lint",
     "upgrade-interactive": "ncu -i -m"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.5.1",
+  "resolutions": {
+    "@types/react": "npm:types-react@19.0.0-rc.1"
+  }
 }

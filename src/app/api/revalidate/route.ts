@@ -1,10 +1,10 @@
-export const dynamic = "force-dynamic";
-
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
-    const authHeader = req.headers.get("Authorization");
+    const headersList = await headers();
+    const authHeader = headersList.get("Authorization");
     const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
 
     if (authHeader !== expectedAuth) {

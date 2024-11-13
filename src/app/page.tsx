@@ -52,14 +52,10 @@ export default async function Home() {
 }
 
 async function getData() {
-  // this opts out of caching
-  // unstable_noStore();
-
   const res = await fetch<BingImageArchiveResponse>(
     "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1",
-    // this opts out of caching too
-    // { cache: "no-store" }
     {
+      cache: "force-cache",
       // unclear if setting cache control headers helps in regards to caching
       // headers: {
       //   "Cache-Control": `s-maxage=0, stale-while-revalidate=${60 * 60 * 5}`,
