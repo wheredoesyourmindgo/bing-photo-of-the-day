@@ -1,5 +1,8 @@
 import Image from "next/image";
 
+export const dynamic = "force-static";
+export const revalidate = 21600; // 6 hours
+
 export interface BingImageArchiveResponse {
   images: Image[];
   tooltips: Tooltips;
@@ -53,16 +56,11 @@ export default async function Home() {
 
 async function getData() {
   const res = await fetch<BingImageArchiveResponse>(
-    "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1",
-    {
-      cache: "force-cache",
-      // unclear if setting cache control headers helps in regards to caching
-      // headers: {
-      //   "Cache-Control": `s-maxage=0, stale-while-revalidate=${60 * 60 * 5}`,
-      // },
-      // allow cache for 5 hours
-      next: { revalidate: 60 * 60 * 5 }, // 5 hours
-    }
+    "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1"
+    // {
+    //   cache: "force-cache",
+    //   next: { revalidate: 60 * 60 * 5 }, // 5 hours
+    // }
   );
 
   if (!res.ok) {
