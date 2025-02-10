@@ -59,7 +59,7 @@ async function getData() {
     "https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1"
     // {
     //   cache: "force-cache",
-    //   next: { revalidate: 60 * 60 * 5 }, // 5 hours
+    //   next: { revalidate: 60 * 60 * 6 }, // 6 hours
     // }
   );
 
