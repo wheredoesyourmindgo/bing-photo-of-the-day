@@ -5,17 +5,17 @@
   "author": "wheredoesyourmindgo <moemanchu@icloud.com>",
   "license": "MIT",
   "dependencies": {
-    "next": "15.1.6",
-    "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "next": "15.2.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.8",
-    "eslint": "^9.20.0",
-    "eslint-config-next": "15.1.6",
-    "prettier": "^3.4.2",
-    "typescript": "^5.5.3",
-    "vercel": "^41.0.2"
+    "@types/react": "^19.0.12",
+    "eslint": "^9.23.0",
+    "eslint-config-next": "15.2.4",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2",
+    "vercel": "^41.4.1"
   },
   "scripts": {
     "start": "next start",
@@ -27,5 +27,5 @@
     "lint": "next lint",
     "upgrade-interactive": "ncu -i -m"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.8.0"
 }
