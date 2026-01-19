@@ -1,66 +1,51 @@
 import Image from 'next/image'
+import type {BingImageArchiveResponse} from 'src/types/bing'
 
-export const dynamic = 'force-static'
-export const revalidate = 21600 // 6 hours
+export const revalidate = 900 // 15 minutes
 
-export interface BingImageArchiveResponse {
-  images: Image[]
-  tooltips: Tooltips
+type HomeProps = {
+  searchParams?: Promise<{
+    copyright?: string
+  }>
 }
 
-export interface Image {
-  startdate: string
-  fullstartdate: string
-  enddate: string
-  url: string
-  urlbase: string
-  copyright: string
-  copyrightlink: string
-  title: string
-  quiz: string
-  wp: boolean
-  hsh: string
-  drk: number
-  top: number
-  bot: number
-  hs: any[]
-}
-
-export interface Tooltips {
-  loading: string
-  previous: string
-  next: string
-  walle: string
-  walls: string
-}
-
-export default async function Home() {
+export default async function Home({searchParams}: HomeProps) {
   const data = await getData()
-  const {imageUrl} = data
+  const params = await searchParams
+
+  const {imageUrl, copyright, copyrightlink: copyrightHref} = data
+
+  const showCopyright = params?.copyright?.toLowerCase() === 'true'
 
   return (
-    <div>
+    <div className="relative h-screen w-screen">
       <Image
         fill
         quality={100}
         src={imageUrl}
         alt="Bing Photo of the Day"
         priority
-        style={{
-          objectFit: 'cover'
-        }}
+        className="object-cover"
       />
+
+      {showCopyright && copyright && copyrightHref && (
+        <a
+          href={copyrightHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute right-2 bottom-2 z-10 rounded bg-black/40 px-2 py-1 text-xs text-white hover:bg-black/70"
+        >
+          {copyright}
+        </a>
+      )}
     </div>
   )
 }
 
 async function getData() {
   const res = await fetch<BingImageArchiveResponse>(
-    'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1'
-    // {
-    //   cache: "force-cache",
-    //   next: { revalidate: 60 * 60 * 6 }, // 6 hours
-    // }
+    'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1',
+    {next: {revalidate}}
   )
 
   if (!res.ok) {
@@ -70,5 +55,9 @@ async function getData() {
   const data = await res.json()
   const [todaysImg] = data.images
   const imageUrl = `https://www.bing.com${todaysImg.url}`
-  return {imageUrl}
+  return {
+    imageUrl,
+    copyright: todaysImg.copyright,
+    copyrightlink: todaysImg.copyrightlink
+  }
 }
