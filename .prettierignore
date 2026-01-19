@@ -1,0 +1,9 @@
+.next/
+.vercel/
+.yarn/
+out/
+public/
+bundles/
+node_modules/
+coverage/
+dist/
