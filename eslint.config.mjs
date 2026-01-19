@@ -23,13 +23,13 @@ const eslintConfig = defineConfig([
   prettierRecommended,
   ...tailwind.configs['flat/recommended'],
   {
+    settings: {
+      // Suppress "Cannot resolve default tailwindcss config path. Please manually set the config option." during lint
+      tailwindcss: {
+        config: path.join(__dirname, './tailwind.config.mjs')
+      }
+    },
     rules: {
-      settings: {
-        // Suppress "Cannot resolve default tailwindcss config path. Please manually set the config option." during lint
-        tailwindcss: {
-          config: path.join(__dirname, './tailwind.config.mjs')
-        }
-      },
       'linebreak-style': ['error', 'unix'],
       'no-console': 'off',
       'react/no-unescaped-entities': 0,
