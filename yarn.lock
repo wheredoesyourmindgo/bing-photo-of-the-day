@@ -2658,6 +2658,7 @@ __metadata:
     react: "npm:19.2.3"
     react-dom: "npm:19.2.3"
     tailwindcss: "npm:^4.1.18"
+    tw-animate-css: "npm:^1.4.0"
     typescript: "npm:^5.9.3"
     vercel: "npm:^50.4.5"
   languageName: unknown
@@ -7118,6 +7119,13 @@ __metadata:
   bin:
     tsx: dist/cli.mjs
   checksum: 10c0/f5072923cd8459a1f9a26df87823a2ab5754641739d69df2a20b415f61814322b751fa6be85db7c6ec73cf68ba8fac2fd1cfc76bdb0aa86ded984d84d5d2126b
+  languageName: node
+  linkType: hard
+
+"tw-animate-css@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "tw-animate-css@npm:1.4.0"
+  checksum: 10c0/6cfbc19ccc73883ec80ef1f9147f43e736cb01ee99c8172968b37eb81b720523d30e38b1a96aef92db3c586d864204db5510b51744ddacbbf0ad8e3c7fb56ec7
   languageName: node
   linkType: hard
 
