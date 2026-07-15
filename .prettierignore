@@ -7,3 +7,4 @@ bundles/
 node_modules/
 coverage/
 dist/
+src/components/ui/

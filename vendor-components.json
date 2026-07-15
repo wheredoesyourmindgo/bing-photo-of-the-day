@@ -1,0 +1,49 @@
+{
+  "components": [
+    {
+      "name": "button",
+      "spec": "button",
+      "source": "shadcn",
+      "paths": ["src/components/ui/button.tsx"]
+    },
+    {
+      "name": "card",
+      "spec": "card",
+      "source": "shadcn",
+      "paths": ["src/components/ui/card.tsx"]
+    },
+    {
+      "name": "label",
+      "spec": "label",
+      "source": "shadcn",
+      "paths": ["src/components/ui/label.tsx"]
+    },
+    {
+      "name": "switch",
+      "spec": "switch",
+      "source": "shadcn",
+      "paths": ["src/components/ui/switch.tsx"]
+    },
+    {
+      "name": "slider",
+      "spec": "slider",
+      "source": "shadcn",
+      "paths": ["src/components/ui/slider.tsx"]
+    },
+    {
+      "name": "toggle-group",
+      "spec": "toggle-group",
+      "source": "shadcn",
+      "paths": [
+        "src/components/ui/toggle-group.tsx",
+        "src/components/ui/toggle.tsx"
+      ]
+    },
+    {
+      "name": "tooltip",
+      "spec": "tooltip",
+      "source": "shadcn",
+      "paths": ["src/components/ui/tooltip.tsx"]
+    }
+  ]
+}
