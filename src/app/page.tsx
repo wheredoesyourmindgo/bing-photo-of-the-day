@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import type {BingImageArchiveResponse} from 'src/types/bing'
+import type {BingImageArchiveResponse} from '../../src/types/bing'
 
 export const revalidate = 900 // 15 minutes
 
