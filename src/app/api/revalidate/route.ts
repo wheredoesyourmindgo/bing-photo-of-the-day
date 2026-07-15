@@ -1,6 +1,11 @@
 import {revalidatePath} from 'next/cache'
 import {headers} from 'next/headers'
 
+// Daily backstop only. The 15-minute Data Cache window on the Bing fetch is
+// what actually keeps the photo current (rollover- and timezone-agnostic);
+// this cron just guarantees at least one fresh pull per day so a first visitor
+// after a long idle gap never gets served a day-old photo. Because the fetch
+// window self-heals, the exact cron time doesn't need to match Bing's rollover.
 export async function GET(_req: Request) {
   try {
     const headersList = await headers()

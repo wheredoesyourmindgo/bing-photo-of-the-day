@@ -9,6 +9,16 @@
 const ENDPOINT = 'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1'
 const IMAGE_BASE_URL = 'https://www.bing.com'
 
+/**
+ * How long a fetched photo stays in Next's Data Cache before it's re-checked.
+ *
+ * This short window — not the daily cron — is what keeps us fresh: nobody knows
+ * exactly when Bing rolls the photo over, so instead of guessing that time we
+ * just re-poll every 15 minutes. Rollover-time- and timezone-agnostic, which is
+ * what we want for a US-wide audience. Worst-case staleness is one window.
+ */
+export const REVALIDATE_SECONDS = 900 // 15 minutes
+
 /** A single entry in the Bing image archive response. */
 interface BingImage {
   /** Path to the image, relative to {@link IMAGE_BASE_URL}. */
@@ -32,16 +42,11 @@ export interface PhotoOfTheDay {
   title: string
 }
 
-/**
- * Fetch today's Bing photo.
- *
- * @param revalidateSeconds How long the upstream response stays in Next's Data
- *   Cache. Kept in sync with the page's `revalidate` export by passing it in.
- */
-export async function getPhotoOfTheDay(
-  revalidateSeconds: number
-): Promise<PhotoOfTheDay> {
-  const res = await fetch(ENDPOINT, {next: {revalidate: revalidateSeconds}})
+/** Fetch today's Bing photo, served from the Data Cache between refreshes. */
+export async function getPhotoOfTheDay(): Promise<PhotoOfTheDay> {
+  const res = await fetch(ENDPOINT, {
+    next: {revalidate: REVALIDATE_SECONDS}
+  })
 
   if (!res.ok) {
     throw new Error(`Failed to fetch Bing image archive: ${res.status}`)

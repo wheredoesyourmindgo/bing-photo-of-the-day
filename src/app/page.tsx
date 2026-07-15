@@ -1,11 +1,6 @@
 import Image from 'next/image'
 import {getPhotoOfTheDay} from '@/lib/bing'
 
-// ISR window for the route. Passed into the fetch below so the cached upstream
-// response and the page share one refresh cadence (15 minutes). The daily cron
-// at /api/revalidate forces an earlier refresh when Bing publishes a new photo.
-export const revalidate = 900
-
 type HomeProps = {
   searchParams?: Promise<{
     copyright?: string
@@ -14,7 +9,7 @@ type HomeProps = {
 
 export default async function Home({searchParams}: HomeProps) {
   const [{imageUrl, copyright, copyrightHref, title}, params] =
-    await Promise.all([getPhotoOfTheDay(revalidate), searchParams])
+    await Promise.all([getPhotoOfTheDay(), searchParams])
 
   const showCopyright = params?.copyright?.toLowerCase() === 'true'
 
