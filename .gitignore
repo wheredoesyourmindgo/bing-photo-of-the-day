@@ -11,6 +11,9 @@
 # testing
 /coverage
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # production
 /.vercel
 .vercel

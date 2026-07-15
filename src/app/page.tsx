@@ -1,7 +1,10 @@
 import Image from 'next/image'
-import type {BingImageArchiveResponse} from '../../src/types/bing'
+import {getPhotoOfTheDay} from '@/lib/bing'
 
-export const revalidate = 900 // 15 minutes
+// ISR window for the route. Passed into the fetch below so the cached upstream
+// response and the page share one refresh cadence (15 minutes). The daily cron
+// at /api/revalidate forces an earlier refresh when Bing publishes a new photo.
+export const revalidate = 900
 
 type HomeProps = {
   searchParams?: Promise<{
@@ -10,21 +13,19 @@ type HomeProps = {
 }
 
 export default async function Home({searchParams}: HomeProps) {
-  const data = await getData()
-  const params = await searchParams
-
-  const {imageUrl, copyright, copyrightlink: copyrightHref} = data
+  const [{imageUrl, copyright, copyrightHref, title}, params] =
+    await Promise.all([getPhotoOfTheDay(revalidate), searchParams])
 
   const showCopyright = params?.copyright?.toLowerCase() === 'true'
 
   return (
-    <div className="relative h-screen w-screen">
+    <main className="relative h-screen w-screen">
       <Image
         fill
+        priority
         quality={100}
         src={imageUrl}
-        alt="Bing Photo of the Day"
-        priority
+        alt={title || 'Bing Photo of the Day'}
         className="object-cover"
       />
 
@@ -38,26 +39,6 @@ export default async function Home({searchParams}: HomeProps) {
           {copyright}
         </a>
       )}
-    </div>
+    </main>
   )
-}
-
-async function getData() {
-  const res = await fetch<BingImageArchiveResponse>(
-    'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1',
-    {next: {revalidate}}
-  )
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch data')
-  }
-
-  const data = await res.json()
-  const [todaysImg] = data.images
-  const imageUrl = `https://www.bing.com${todaysImg.url}`
-  return {
-    imageUrl,
-    copyright: todaysImg.copyright,
-    copyrightlink: todaysImg.copyrightlink
-  }
 }

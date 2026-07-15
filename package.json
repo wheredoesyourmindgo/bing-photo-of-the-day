@@ -1,7 +1,7 @@
 {
   "name": "bing-photo-of-the-day",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "author": "wheredoesyourmindgo <moemanchu@icloud.com>",
   "license": "MIT",
   "dependencies": {

@@ -1,9 +1,6 @@
-const nextConfig = {
-  logging: {
-    fetches: {
-      fullUrl: true
-    }
-  },
+import type {NextConfig} from 'next'
+
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
@@ -11,7 +8,12 @@ const nextConfig = {
         hostname: 'www.bing.com'
       }
     ]
+  },
+  logging: {
+    fetches: {
+      fullUrl: true
+    }
   }
 }
 
-module.exports = nextConfig
+export default nextConfig
