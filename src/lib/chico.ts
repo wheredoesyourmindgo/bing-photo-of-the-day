@@ -39,7 +39,9 @@ export const CHICO_SIDES: readonly ChicoSide[] = [
  * the only place that needs to change to grow the roster. Use transparent PNGs
  * (JPG has no alpha channel), so Chico cuts out cleanly over the photo.
  */
-export const CHICO_IMAGES = ['/images/Chico_1.png'] as const
+export const CHICO_IMAGES = [
+  'https://ikytztnux2hjbem7.public.blob.vercel-storage.com/Chico_1.png'
+] as const
 
 /**
  * The roster's intrinsic pixel size — used both as `next/image`'s required

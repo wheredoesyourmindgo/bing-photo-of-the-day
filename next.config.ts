@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.bing.com'
+      },
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com'
       }
     ]
   },
