@@ -92,7 +92,7 @@ directly as `owner/repo` registry sources when the repository has a root
     "@acme": "https://acme.com/r/{name}.json",
     "@private": {
       "url": "https://private.com/r/{name}.json",
-      "headers": { "Authorization": "Bearer ${MY_TOKEN}" }
+      "headers": {"Authorization": "Bearer ${MY_TOKEN}"}
     }
   }
 }

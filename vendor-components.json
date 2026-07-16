@@ -1,6 +1,12 @@
 {
   "components": [
     {
+      "name": "accordion",
+      "spec": "accordion",
+      "source": "shadcn",
+      "paths": ["src/components/ui/accordion.tsx"]
+    },
+    {
       "name": "button",
       "spec": "button",
       "source": "shadcn",

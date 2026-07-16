@@ -35,7 +35,9 @@ Sources:
 }
 
 function componentStatus(component) {
-  const existingPaths = component.paths.filter((file) => existsSync(path.join(cwd, file)))
+  const existingPaths = component.paths.filter((file) =>
+    existsSync(path.join(cwd, file))
+  )
 
   return {
     status:
@@ -74,7 +76,10 @@ function findComponents(selectors, source) {
 function listComponents() {
   for (const component of manifest.components) {
     const {status, existingPaths} = componentStatus(component)
-    const paths = existingPaths.length > 0 ? existingPaths.join(', ') : component.paths.join(', ')
+    const paths =
+      existingPaths.length > 0
+        ? existingPaths.join(', ')
+        : component.paths.join(', ')
     console.log(
       `${component.source.padEnd(17)} ${component.name.padEnd(32)} ${status.padEnd(9)} ${paths}`
     )
@@ -107,11 +112,17 @@ function discoverComponents() {
     for (const absPath of result.stdout.split('\n').filter(Boolean)) {
       const relPath = path.relative(cwd, absPath)
 
-      if (source === 'motion-primitives' && !MOTION_PRIMITIVES_FILES.has(path.basename(relPath))) {
+      if (
+        source === 'motion-primitives' &&
+        !MOTION_PRIMITIVES_FILES.has(path.basename(relPath))
+      ) {
         continue
       }
 
-      if (source === 'shadcn' && MOTION_PRIMITIVES_FILES.has(path.basename(relPath))) {
+      if (
+        source === 'shadcn' &&
+        MOTION_PRIMITIVES_FILES.has(path.basename(relPath))
+      ) {
         continue
       }
 
@@ -125,7 +136,9 @@ function discoverComponents() {
 
   for (const finding of findings.sort((a, b) => a.path.localeCompare(b.path))) {
     const tracking =
-      finding.trackedBy.length > 0 ? `tracked by ${finding.trackedBy.join(', ')}` : 'untracked'
+      finding.trackedBy.length > 0
+        ? `tracked by ${finding.trackedBy.join(', ')}`
+        : 'untracked'
     console.log(`${finding.source.padEnd(17)} ${finding.path} (${tracking})`)
   }
 }
@@ -162,15 +175,21 @@ function syncComponents(selectors, source, options) {
     }
 
     if (!options.dryRun) {
-      const filesToFormat = component.paths.filter((file) => existsSync(path.join(cwd, file)))
+      const filesToFormat = component.paths.filter((file) =>
+        existsSync(path.join(cwd, file))
+      )
 
       if (filesToFormat.length > 0) {
         console.log(`Formatting ${component.source}:${component.name}`)
-        const prettierResult = spawnSync('yarn', ['prettier', '--write', ...filesToFormat], {
-          cwd,
-          stdio: 'inherit',
-          encoding: 'utf8'
-        })
+        const prettierResult = spawnSync(
+          'yarn',
+          ['prettier', '--write', ...filesToFormat],
+          {
+            cwd,
+            stdio: 'inherit',
+            encoding: 'utf8'
+          }
+        )
 
         if (prettierResult.status !== 0) {
           process.exitCode = prettierResult.status ?? 1

@@ -10,17 +10,15 @@ import {
 } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import {
-  ArrowDownLeft,
-  ArrowDownRight,
-  ArrowUpLeft,
-  ArrowUpRight,
-  Check,
-  Copy,
-  Eye,
-  X
-} from 'lucide-react'
+import {Check, Copy, Eye, Shuffle, X} from 'lucide-react'
 import {Caption} from '@/components/caption'
+import {Chico} from '@/components/chico'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/Accordion'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Label} from '@/components/ui/label'
@@ -36,6 +34,18 @@ import {
   MAX_OFFSET,
   MIN_OFFSET
 } from '@/lib/caption'
+import {
+  chicoParamsToQuery,
+  rollChico,
+  ChicoConfig,
+  ChicoRoll,
+  ChicoSide,
+  DEFAULT_CHICO_POS,
+  DEFAULT_CHICO_SIDES,
+  DEFAULT_CHICO_SIZE,
+  MAX_CHICO_SIZE,
+  MIN_CHICO_SIZE
+} from '@/lib/chico'
 
 /** How long the full-screen preview stays up before returning to the controls. */
 const PREVIEW_SECONDS = 8
@@ -47,16 +57,27 @@ interface PlaygroundProps {
   copyrightHref: string
 }
 
-const CORNER_OPTIONS: {
-  value: CaptionCorner
-  label: string
-  Icon: typeof ArrowUpLeft
-}[] = [
-  {value: 'tl', label: 'Top left', Icon: ArrowUpLeft},
-  {value: 'tr', label: 'Top right', Icon: ArrowUpRight},
-  {value: 'bl', label: 'Bottom left', Icon: ArrowDownLeft},
-  {value: 'br', label: 'Bottom right', Icon: ArrowDownRight}
+const CORNER_OPTIONS: {value: CaptionCorner; label: string}[] = [
+  {value: 'tl', label: 'Top left'},
+  {value: 'tr', label: 'Top right'},
+  {value: 'bl', label: 'Bottom left'},
+  {value: 'br', label: 'Bottom right'}
 ]
+
+const SIDE_OPTIONS: {value: ChicoSide; label: string}[] = [
+  {value: 'top', label: 'Top'},
+  {value: 'bottom', label: 'Bottom'},
+  {value: 'left', label: 'Left'},
+  {value: 'right', label: 'Right'}
+]
+
+const DEFAULT_CHICO_CONFIG: ChicoConfig = {
+  show: false,
+  sides: [...DEFAULT_CHICO_SIDES],
+  random: false,
+  pos: DEFAULT_CHICO_POS,
+  size: DEFAULT_CHICO_SIZE
+}
 
 export function Playground({
   imageUrl,
@@ -71,8 +92,49 @@ export function Playground({
     y: DEFAULT_OFFSET,
     wrap: false
   })
+  const [chico, setChico] = useState<ChicoConfig>(DEFAULT_CHICO_CONFIG)
 
-  const query = useMemo(() => captionParamsToQuery(config), [config])
+  // The resolved side/position Chico is actually shown at. Kept out of `chico`
+  // (and the URL) and only ever rolled from a user interaction (never at mount
+  // / in an effect), so the SSR and first-client render agree — no hydration
+  // mismatch. Starts at the deterministic default (single side, centered).
+  const [roll, setRoll] = useState<ChicoRoll>({
+    side: DEFAULT_CHICO_SIDES[0],
+    pos: DEFAULT_CHICO_POS
+  })
+
+  // Re-roll when the candidate sides change (a fresh side pick, if there's more
+  // than one) or when random position turns on. Other edits (pos/size, or
+  // random turning off) keep the current roll.
+  const handleChicoChange = useCallback(
+    (next: ChicoConfig) => {
+      setChico(next)
+      const sidesChanged = next.sides !== chico.sides
+      const randomTurnedOn = next.random && !chico.random
+      if (sidesChanged || randomTurnedOn) {
+        setRoll(rollChico(next))
+      }
+    },
+    [chico]
+  )
+
+  // `roll` only holds outcomes that are actually random (the side pick, when
+  // ambiguous; the position, when `chico.random`). For everything else, read
+  // straight from `chico` so e.g. dragging the position slider — which never
+  // triggers a re-roll above — shows up immediately, instead of only taking
+  // effect the next time something re-rolls.
+  const resolvedRoll: ChicoRoll = {
+    side: chico.sides.length > 1 ? roll.side : (chico.sides[0] ?? roll.side),
+    pos: chico.random ? roll.pos : chico.pos
+  }
+
+  const query = useMemo(
+    () =>
+      [captionParamsToQuery(config), chicoParamsToQuery(chico)]
+        .filter(Boolean)
+        .join('&'),
+    [config, chico]
+  )
 
   return (
     <>
@@ -92,11 +154,19 @@ export function Playground({
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-          <Controls config={config} onChange={setConfig} />
+          <Controls
+            config={config}
+            onChange={setConfig}
+            chico={chico}
+            onChicoChange={handleChicoChange}
+            onShuffle={() => setRoll(rollChico(chico, resolvedRoll))}
+          />
 
           <div className="flex min-w-0 flex-col gap-4">
             <PreviewPane
               config={config}
+              chico={chico}
+              chicoRoll={resolvedRoll}
               imageUrl={imageUrl}
               title={title}
               copyright={copyright}
@@ -109,6 +179,8 @@ export function Playground({
 
       <FullScreenPreview
         config={config}
+        chico={chico}
+        chicoRoll={resolvedRoll}
         imageUrl={imageUrl}
         title={title}
         copyright={copyright}
@@ -120,10 +192,16 @@ export function Playground({
 
 function Controls({
   config,
-  onChange
+  onChange,
+  chico,
+  onChicoChange,
+  onShuffle
 }: {
   config: CaptionConfig
   onChange: (next: CaptionConfig) => void
+  chico: ChicoConfig
+  onChicoChange: (next: ChicoConfig) => void
+  onShuffle: () => void
 }) {
   return (
     <Card className="h-fit">
@@ -144,32 +222,18 @@ function Controls({
             disabled={!config.show}
           >
             <Field label="Corner">
-              <ToggleGroup
-                variant="outline"
-                spacing={4}
-                value={[config.corner]}
-                onValueChange={(value) => {
-                  // Base UI toggle-groups carry an array; ignore the empty
-                  // case so a corner is always selected (radio-like).
-                  const next = value[0]
-                  if (next) {
-                    onChange({...config, corner: next as CaptionCorner})
-                  }
-                }}
-                className="grid w-full grid-cols-2"
-              >
-                {CORNER_OPTIONS.map(({value, label, Icon}) => (
-                  <ToggleGroupItem
-                    key={value}
-                    value={value}
-                    aria-label={label}
-                    className="justify-start gap-2"
-                  >
-                    <Icon className="size-4" />
-                    <span className="text-xs">{label}</span>
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+              <div className="flex flex-col gap-2">
+                <CornerToggleRow
+                  options={CORNER_OPTIONS.slice(0, 2)}
+                  corner={config.corner}
+                  onChange={(corner) => onChange({...config, corner})}
+                />
+                <CornerToggleRow
+                  options={CORNER_OPTIONS.slice(2, 4)}
+                  corner={config.corner}
+                  onChange={(corner) => onChange({...config, corner})}
+                />
+              </div>
             </Field>
 
             <OffsetSlider
@@ -207,8 +271,133 @@ function Controls({
             </Button>
           </fieldset>
         </Section>
+
+        <Accordion className="-mt-2 rounded-none border-0">
+          <AccordionItem value="chico" className="data-open:bg-transparent">
+            <AccordionTrigger className="-mx-2 p-2">Advanced</AccordionTrigger>
+            <AccordionContent className="px-0 pt-4">
+              <ChicoControls
+                chico={chico}
+                onChange={onChicoChange}
+                onShuffle={onShuffle}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
+  )
+}
+
+/** The hidden "Chico" toy, tucked inside the Advanced accordion. */
+function ChicoControls({
+  chico,
+  onChange,
+  onShuffle
+}: {
+  chico: ChicoConfig
+  onChange: (next: ChicoConfig) => void
+  onShuffle: () => void
+}) {
+  return (
+    <Section title="Chico">
+      <ToggleRow
+        id="show-chico"
+        label="Show Chico"
+        checked={chico.show}
+        onChange={(show) => onChange({...chico, show})}
+      />
+
+      <fieldset
+        className="flex flex-col gap-4 disabled:opacity-50"
+        disabled={!chico.show}
+      >
+        <Field label="Sides">
+          <ToggleGroup
+            variant="outline"
+            spacing={0}
+            multiple
+            value={chico.sides}
+            onValueChange={(value) => {
+              // Keep at least one side selected so there's always a Chico.
+              const sides = value as ChicoSide[]
+              if (sides.length > 0) onChange({...chico, sides})
+            }}
+            className="w-full"
+          >
+            {SIDE_OPTIONS.map(({value, label}) => (
+              <ToggleGroupItem
+                key={value}
+                value={value}
+                aria-label={label}
+                className="flex-1"
+              >
+                <span className="text-xs">{label}</span>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          {chico.sides.length > 1 && (
+            <p className="text-muted-foreground text-xs">
+              With more than one side picked, Chico shows up on one of them at
+              random (separate from the random position option below).
+            </p>
+          )}
+          {(chico.random || chico.sides.length > 1) && (
+            <Button
+              variant="outline"
+              size="xs"
+              className="self-start"
+              onClick={onShuffle}
+            >
+              <Shuffle className="size-3" />
+              Shuffle Live Preview
+            </Button>
+          )}
+        </Field>
+
+        <ToggleRow
+          id="chico-random"
+          label="Random position"
+          checked={chico.random}
+          onChange={(random) => onChange({...chico, random})}
+        />
+
+        {!chico.random && (
+          <PercentSlider
+            label="Position"
+            value={chico.pos}
+            min={0}
+            max={100}
+            onChange={(pos) => onChange({...chico, pos})}
+          />
+        )}
+
+        <PercentSlider
+          label="Size"
+          value={chico.size}
+          min={MIN_CHICO_SIZE}
+          max={MAX_CHICO_SIZE}
+          onChange={(size) => onChange({...chico, size})}
+        />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 self-start"
+          onClick={() =>
+            onChange({
+              ...chico,
+              sides: [...DEFAULT_CHICO_SIDES],
+              random: false,
+              pos: DEFAULT_CHICO_POS,
+              size: DEFAULT_CHICO_SIZE
+            })
+          }
+        >
+          Reset Chico
+        </Button>
+      </fieldset>
+    </Section>
   )
 }
 
@@ -254,6 +443,47 @@ function Field({label, children}: {label: string; children: ReactNode}) {
   )
 }
 
+/**
+ * One row of a joined, toolbar-style toggle group (shared borders, rounded
+ * only at the row's two ends) — full corner labels don't fit in a single row,
+ * so {@link CORNER_OPTIONS} renders as two of these, split top/bottom.
+ */
+function CornerToggleRow({
+  options,
+  corner,
+  onChange
+}: {
+  options: {value: CaptionCorner; label: string}[]
+  corner: CaptionCorner
+  onChange: (corner: CaptionCorner) => void
+}) {
+  return (
+    <ToggleGroup
+      variant="outline"
+      spacing={0}
+      value={[corner]}
+      onValueChange={(value) => {
+        // Base UI toggle-groups carry an array; ignore the empty case so a
+        // corner is always selected (radio-like).
+        const next = value[0]
+        if (next) onChange(next as CaptionCorner)
+      }}
+      className="w-full"
+    >
+      {options.map(({value, label}) => (
+        <ToggleGroupItem
+          key={value}
+          value={value}
+          aria-label={label}
+          className="flex-1"
+        >
+          <span className="text-xs">{label}</span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  )
+}
+
 function OffsetSlider({
   label,
   value,
@@ -282,16 +512,55 @@ function OffsetSlider({
   )
 }
 
+/** Like {@link OffsetSlider} but reads out a percentage over a caller-set range. */
+function PercentSlider({
+  label,
+  value,
+  min,
+  max,
+  onChange
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <Label>{label}</Label>
+        <span className="text-muted-foreground font-mono text-xs">
+          {value}%
+        </span>
+      </div>
+      <Slider
+        min={min}
+        max={max}
+        step={1}
+        value={[value]}
+        onValueChange={(next) => onChange(Array.isArray(next) ? next[0] : next)}
+      />
+    </div>
+  )
+}
+
 function PreviewPane({
   config,
+  chico,
+  chicoRoll,
   imageUrl,
   title,
   copyright,
   copyrightHref
-}: {config: CaptionConfig} & PlaygroundProps) {
+}: {
+  config: CaptionConfig
+  chico: ChicoConfig
+  chicoRoll: ChicoRoll
+} & PlaygroundProps) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+      <div className="[container-type:size] relative aspect-video w-full overflow-hidden rounded-lg border">
         <Image
           fill
           quality={75}
@@ -300,6 +569,7 @@ function PreviewPane({
           className="object-cover"
           sizes="(min-width: 1024px) 60vw, 100vw"
         />
+        <Chico config={chico} roll={chicoRoll} />
         <Caption
           config={config}
           copyright={copyright}
@@ -383,11 +653,17 @@ function UrlBox({query}: {query: string}) {
 
 function FullScreenPreview({
   config,
+  chico,
+  chicoRoll,
   imageUrl,
   title,
   copyright,
   copyrightHref
-}: {config: CaptionConfig} & PlaygroundProps) {
+}: {
+  config: CaptionConfig
+  chico: ChicoConfig
+  chicoRoll: ChicoRoll
+} & PlaygroundProps) {
   const [open, setOpen] = useState(false)
   const [remaining, setRemaining] = useState(PREVIEW_SECONDS)
 
@@ -433,7 +709,7 @@ function FullScreenPreview({
       </Button>
 
       {open && (
-        <div className="animate-in fade-in fixed inset-0 z-50 bg-black duration-300">
+        <div className="animate-in fade-in [container-type:size] fixed inset-0 z-50 bg-black duration-300">
           <Image
             fill
             priority
@@ -442,6 +718,7 @@ function FullScreenPreview({
             alt={title || 'Bing Photo of the Day'}
             className="object-cover"
           />
+          <Chico config={chico} roll={chicoRoll} />
           <Caption
             config={config}
             copyright={copyright}
