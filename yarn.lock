@@ -3740,9 +3740,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bing-photo-of-the-day@workspace:.":
+"bing-image-of-the-day@workspace:.":
   version: 0.0.0-use.local
-  resolution: "bing-photo-of-the-day@workspace:."
+  resolution: "bing-image-of-the-day@workspace:."
   dependencies:
     "@base-ui/react": "npm:^1.6.0"
     "@tailwindcss/postcss": "npm:^4.3.2"

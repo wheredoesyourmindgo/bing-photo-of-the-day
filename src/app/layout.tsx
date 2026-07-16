@@ -5,8 +5,8 @@ import {TooltipProvider} from '@/components/ui/tooltip'
 import './globals.css'
 
 export const metadata = {
-  title: 'Bing Photo of the Day',
-  description: 'Display the Bing Photo of the Day'
+  title: 'Bing Image of the Day',
+  description: 'Display the Bing Image of the Day'
 }
 
 const sansFont = Manrope({

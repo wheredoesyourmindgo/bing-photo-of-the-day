@@ -1,4 +1,6 @@
-# Bing Photo of the Day
+# Bing Image of the Day
+
+Live: [bing-image-of-the-day.vercel.app](https://bing-image-of-the-day.vercel.app)
 
 A tiny [Next.js](https://nextjs.org) app that displays Bing's daily "Image of the
 Day" full-screen, with an optional, fully-configurable caption (Bing's title and

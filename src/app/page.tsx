@@ -28,7 +28,7 @@ export default async function Home({searchParams}: HomeProps) {
         priority
         quality={100}
         src={imageUrl}
-        alt={title || 'Bing Photo of the Day'}
+        alt={title || 'Bing Image of the Day'}
         className="object-cover"
       />
 

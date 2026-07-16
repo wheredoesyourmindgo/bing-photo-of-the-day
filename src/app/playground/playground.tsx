@@ -142,7 +142,7 @@ export function Playground({
       <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-10">
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Photo of the Day · playground
+            Image of the Day · playground
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Configure the display, preview it live, then copy the URL to use —
@@ -566,7 +566,7 @@ function PreviewPane({
           fill
           quality={75}
           src={imageUrl}
-          alt={title || 'Bing Photo of the Day'}
+          alt={title || 'Bing Image of the Day'}
           className="object-cover"
           sizes="(min-width: 1024px) 60vw, 100vw"
         />
@@ -690,7 +690,7 @@ function FullScreenPreview({
             priority
             quality={100}
             src={imageUrl}
-            alt={title || 'Bing Photo of the Day'}
+            alt={title || 'Bing Image of the Day'}
             className="object-cover"
           />
           <Chico config={chico} roll={chicoRoll} />
