@@ -1,6 +1,13 @@
 'use client'
 
-import {useCallback, useEffect, useMemo, useState, type ReactNode} from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ReactNode
+} from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -308,11 +315,20 @@ function PreviewPane({
   )
 }
 
+/** window.location.origin never changes for the life of the page, so there's nothing to subscribe to. */
+function subscribeToOrigin() {
+  return () => {}
+}
+
 function UrlBox({query}: {query: string}) {
-  // Origin is only known in the browser; a lazy initializer keeps it out of the
-  // SSR pass (which renders a relative URL) without a setState-in-effect.
-  const [origin] = useState(() =>
-    typeof window === 'undefined' ? '' : window.location.origin
+  // Origin is only known in the browser. useSyncExternalStore renders the SSR
+  // snapshot ('') on the server and on the first client pass, then swaps in
+  // the real origin through a normal (non-hydration) commit — no effect, no
+  // hydration mismatch to suppress.
+  const origin = useSyncExternalStore(
+    subscribeToOrigin,
+    () => window.location.origin,
+    () => ''
   )
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
 
@@ -345,10 +361,7 @@ function UrlBox({query}: {query: string}) {
         <CardTitle className="text-sm">URL to use</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center gap-2">
-        <code
-          suppressHydrationWarning
-          className="bg-muted min-w-0 flex-1 overflow-x-auto rounded px-3 py-2 font-mono text-xs whitespace-nowrap"
-        >
+        <code className="bg-muted min-w-0 flex-1 overflow-x-auto rounded px-3 py-2 font-mono text-xs whitespace-nowrap">
           {url || '…'}
         </code>
         <Button
