@@ -449,8 +449,9 @@ function FullScreenPreview({
           />
 
           <div className="absolute top-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur">
-            <span className="font-mono tabular-nums">
-              Returning in {remaining}s
+            <span className="flex items-center gap-1">
+              <span>Returning in</span>
+              <span className="font-mono tabular-nums">{remaining}s</span>
             </span>
             <button
               type="button"
