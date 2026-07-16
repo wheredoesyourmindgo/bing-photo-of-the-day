@@ -8,3 +8,5 @@ node_modules/
 coverage/
 dist/
 src/components/ui/
+src/components/animate-ui/
+src/hooks/use-controlled-state.tsx

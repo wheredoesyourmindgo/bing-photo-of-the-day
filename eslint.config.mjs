@@ -18,7 +18,9 @@ const eslintConfig = defineConfig([
     '.claude/**', // Claude Code worktrees/settings — not project source
     '.vercel/**',
     'next-env.d.ts',
-    'src/components/ui/**' // Ignore shadcn/ui components
+    'src/components/ui/**', // Ignore shadcn/ui components
+    'src/components/animate-ui/**', // Ignore animate-ui components
+    'src/hooks/use-controlled-state.tsx' // Vendored hook bundled with animate-ui components
   ]),
   ...nextTs,
   ...nextVitals,

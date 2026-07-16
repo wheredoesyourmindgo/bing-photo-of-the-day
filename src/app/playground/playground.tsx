@@ -10,7 +10,7 @@ import {
 } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import {Check, Copy, Eye, Shuffle, X} from 'lucide-react'
+import {Eye, Shuffle, X} from 'lucide-react'
 import {Caption} from '@/components/caption'
 import {Chico} from '@/components/chico'
 import {
@@ -19,6 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/Accordion'
+import {CopyButton} from '@/components/CopyButton'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Label} from '@/components/ui/label'
@@ -600,52 +601,26 @@ function UrlBox({query}: {query: string}) {
     () => window.location.origin,
     () => ''
   )
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
 
   const url = `${origin}${query ? `?${query}` : ''}`
-
-  // Derived, so editing the config after a copy clears the tick automatically
-  // (no reset-in-effect) — the tick only shows for the URL that was copied.
-  const copied = copiedUrl === url
-
-  const copy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopiedUrl(url)
-    } catch {
-      // Clipboard can be unavailable (insecure origin / denied permission);
-      // the URL is still visible for a manual copy.
-    }
-  }, [url])
-
-  // Clear the tick a couple seconds after a successful copy.
-  useEffect(() => {
-    if (!copied) return
-    const id = setTimeout(() => setCopiedUrl(null), 2000)
-    return () => clearTimeout(id)
-  }, [copied])
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-sm">URL to use</CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center gap-2">
-        <code className="bg-muted min-w-0 flex-1 overflow-x-auto rounded px-3 py-2 font-mono text-xs whitespace-nowrap">
-          {url || '…'}
-        </code>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Copy URL"
-          onClick={copy}
-        >
-          {copied ? (
-            <Check className="size-4 text-green-600" />
-          ) : (
-            <Copy className="size-4" />
-          )}
-        </Button>
+      <CardContent>
+        <div className="bg-muted flex items-center overflow-hidden rounded-md">
+          <code className="min-w-0 flex-1 overflow-x-auto py-2 pl-3 font-mono text-sm whitespace-nowrap">
+            {url || '…'}
+          </code>
+          <CopyButton
+            variant="ghost"
+            content={url}
+            aria-label="Copy URL"
+            className="mr-1 shrink-0"
+          />
+        </div>
       </CardContent>
     </Card>
   )
