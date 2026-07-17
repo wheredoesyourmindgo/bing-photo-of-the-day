@@ -1,9 +1,8 @@
 import Image from 'next/image'
 import {
   chicoPlacement,
-  CHICO_IMAGES,
-  CHICO_IMAGE_HEIGHT,
-  CHICO_IMAGE_WIDTH,
+  CHICO_VARIANTS,
+  resolvedChicoSize,
   type ChicoConfig,
   type ChicoRoll
 } from '@/lib/chico'
@@ -11,9 +10,10 @@ import {
 interface ChicoProps {
   config: ChicoConfig
   /**
-   * The resolved side/position to render. The caller owns the roll so a render
-   * stays deterministic (the live page rolls once per request; the playground
-   * keeps it in state, only re-rolling on the interactions that warrant it).
+   * The resolved photo/side/position to render. The caller owns the roll so a
+   * render stays deterministic (the live page rolls once per request; the
+   * playground keeps it in state, only re-rolling on the interactions that
+   * warrant it).
    */
   roll: ChicoRoll
 }
@@ -27,10 +27,9 @@ interface ChicoProps {
 export function Chico({config, roll}: ChicoProps) {
   if (!config.show) return null
 
-  // Only the roster's first photo is wired up today; more can slot into
-  // CHICO_IMAGES and a future variant control.
-  const src = CHICO_IMAGES[0]
-  const {box, art} = chicoPlacement(roll, config.size)
+  const variant = CHICO_VARIANTS[roll.variant]
+  const size = resolvedChicoSize(config, variant)
+  const {box, art} = chicoPlacement(roll, size, variant)
 
   return (
     <div
@@ -40,10 +39,10 @@ export function Chico({config, roll}: ChicoProps) {
     >
       <div style={art}>
         <Image
-          src={src}
+          src={variant.url}
           alt=""
-          width={CHICO_IMAGE_WIDTH}
-          height={CHICO_IMAGE_HEIGHT}
+          width={variant.width}
+          height={variant.height}
           className="size-full drop-shadow-lg"
           sizes="60vw"
         />

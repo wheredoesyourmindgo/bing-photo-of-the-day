@@ -15,8 +15,9 @@ export default async function Home({searchParams}: HomeProps) {
 
   const config = parseCaptionParams(params)
   const chico = parseChicoParams(params)
-  // Rolled fresh per request (this page isn't hydrated): picks a side at random
-  // when multiple are candidates, and a position when `chicoRandom=true`.
+  // Rolled fresh per request (this page isn't hydrated): picks a photo at
+  // random from the roster, a side at random when multiple are candidates, and
+  // a position when `chicoRandom=true`.
   const chicoRoll = rollChico(chico)
 
   return (

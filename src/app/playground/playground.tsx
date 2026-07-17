@@ -10,6 +10,7 @@ import {
 } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import {AnimatePresence, motion} from 'motion/react'
 import {Eye, Shuffle, X} from 'lucide-react'
 import {Caption} from '@/components/caption'
 import {Chico} from '@/components/chico'
@@ -37,13 +38,13 @@ import {
 } from '@/lib/caption'
 import {
   chicoParamsToQuery,
+  resolvedChicoPos,
+  resolvedChicoSize,
   rollChico,
+  CHICO_VARIANTS,
   ChicoConfig,
   ChicoRoll,
   ChicoSide,
-  DEFAULT_CHICO_POS,
-  DEFAULT_CHICO_SIDES,
-  DEFAULT_CHICO_SIZE,
   MAX_CHICO_SIZE,
   MIN_CHICO_SIZE
 } from '@/lib/chico'
@@ -74,10 +75,7 @@ const SIDE_OPTIONS: {value: ChicoSide; label: string}[] = [
 
 const DEFAULT_CHICO_CONFIG: ChicoConfig = {
   show: false,
-  sides: [...DEFAULT_CHICO_SIDES],
-  random: false,
-  pos: DEFAULT_CHICO_POS,
-  size: DEFAULT_CHICO_SIZE
+  random: false
 }
 
 export function Playground({
@@ -95,39 +93,50 @@ export function Playground({
   })
   const [chico, setChico] = useState<ChicoConfig>(DEFAULT_CHICO_CONFIG)
 
-  // The resolved side/position Chico is actually shown at. Kept out of `chico`
-  // (and the URL) and only ever rolled from a user interaction (never at mount
-  // / in an effect), so the SSR and first-client render agree — no hydration
-  // mismatch. Starts at the deterministic default (single side, centered).
+  // The resolved photo/side/position Chico is actually shown at. Kept out of
+  // `chico` (and the URL) and only ever rolled from a user interaction (never
+  // at mount / in an effect), so the SSR and first-client render agree — no
+  // hydration mismatch. Starts at the deterministic default (roster's first
+  // photo, its own side, centered on its own position).
   const [roll, setRoll] = useState<ChicoRoll>({
-    side: DEFAULT_CHICO_SIDES[0],
-    pos: DEFAULT_CHICO_POS
+    variant: 0,
+    side: CHICO_VARIANTS[0].side,
+    pos: CHICO_VARIANTS[0].pos
   })
 
-  // Re-roll when the candidate sides change (a fresh side pick, if there's more
-  // than one) or when random position turns on. Other edits (pos/size, or
-  // random turning off) keep the current roll.
+  // Re-roll (side/position only — the photo stays put, see `rollChico`'s
+  // `rerollVariant`) when the candidate sides change (a fresh side pick, if
+  // there's more than one) or when random position turns on. Other edits
+  // (pos/size, or random turning off) keep the current roll.
   const handleChicoChange = useCallback(
     (next: ChicoConfig) => {
       setChico(next)
       const sidesChanged = next.sides !== chico.sides
       const randomTurnedOn = next.random && !chico.random
       if (sidesChanged || randomTurnedOn) {
-        setRoll(rollChico(next))
+        setRoll(rollChico(next, roll))
       }
     },
-    [chico]
+    [chico, roll]
   )
 
-  // `roll` only holds outcomes that are actually random (the side pick, when
-  // ambiguous; the position, when `chico.random`). For everything else, read
-  // straight from `chico` so e.g. dragging the position slider — which never
-  // triggers a re-roll above — shows up immediately, instead of only taking
-  // effect the next time something re-rolls.
+  const currentVariant = CHICO_VARIANTS[roll.variant]
+
+  // `roll` only holds outcomes that are actually random (which photo; the side
+  // pick, when ambiguous; the position, when `chico.random`). For everything
+  // else, read straight from `chico`/the current photo's own defaults so e.g.
+  // dragging the position slider — which never triggers a re-roll above —
+  // shows up immediately, instead of only taking effect the next time
+  // something re-rolls.
   const resolvedRoll: ChicoRoll = {
-    side: chico.sides.length > 1 ? roll.side : (chico.sides[0] ?? roll.side),
-    pos: chico.random ? roll.pos : chico.pos
+    variant: roll.variant,
+    side:
+      chico.sides && chico.sides.length > 1
+        ? roll.side
+        : (chico.sides?.[0] ?? currentVariant.side),
+    pos: chico.random ? roll.pos : resolvedChicoPos(chico, currentVariant)
   }
+  const chicoSize = resolvedChicoSize(chico, currentVariant)
 
   const query = useMemo(
     () =>
@@ -159,11 +168,12 @@ export function Playground({
             config={config}
             onChange={setConfig}
             chico={chico}
+            chicoRoll={resolvedRoll}
+            chicoSize={chicoSize}
             onChicoChange={handleChicoChange}
-            onShuffle={() => setRoll(rollChico(chico, resolvedRoll))}
           />
 
-          <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex min-w-0 flex-col gap-6">
             <PreviewPane
               config={config}
               chico={chico}
@@ -173,7 +183,15 @@ export function Playground({
               copyright={copyright}
               copyrightHref={copyrightHref}
             />
-            <UrlBox query={query} />
+            <ShuffleButton
+              show={chico.show}
+              onShuffle={() =>
+                setRoll(rollChico(chico, resolvedRoll, {rerollVariant: true}))
+              }
+            />
+            <motion.div layout transition={{duration: 0.2}}>
+              <UrlBox query={query} />
+            </motion.div>
           </div>
         </div>
       </main>
@@ -195,14 +213,16 @@ function Controls({
   config,
   onChange,
   chico,
-  onChicoChange,
-  onShuffle
+  chicoRoll,
+  chicoSize,
+  onChicoChange
 }: {
   config: CaptionConfig
   onChange: (next: CaptionConfig) => void
   chico: ChicoConfig
+  chicoRoll: ChicoRoll
+  chicoSize: number
   onChicoChange: (next: ChicoConfig) => void
-  onShuffle: () => void
 }) {
   return (
     <Card className="h-fit">
@@ -279,8 +299,9 @@ function Controls({
             <AccordionContent className="px-0 pt-4">
               <ChicoControls
                 chico={chico}
+                roll={chicoRoll}
+                size={chicoSize}
                 onChange={onChicoChange}
-                onShuffle={onShuffle}
               />
             </AccordionContent>
           </AccordionItem>
@@ -293,13 +314,16 @@ function Controls({
 /** The hidden "Chico" toy, tucked inside the Advanced accordion. */
 function ChicoControls({
   chico,
-  onChange,
-  onShuffle
+  roll,
+  size,
+  onChange
 }: {
   chico: ChicoConfig
+  roll: ChicoRoll
+  size: number
   onChange: (next: ChicoConfig) => void
-  onShuffle: () => void
 }) {
+  const sideCount = chico.sides?.length ?? 0
   return (
     <Section title="Chico">
       <ToggleRow
@@ -318,11 +342,12 @@ function ChicoControls({
             variant="outline"
             spacing={0}
             multiple
-            value={chico.sides}
+            value={chico.sides ?? [roll.side]}
             onValueChange={(value) => {
-              // Keep at least one side selected so there's always a Chico.
+              // An empty selection reverts to "auto" — whichever photo is
+              // showing uses its own default edge.
               const sides = value as ChicoSide[]
-              if (sides.length > 0) onChange({...chico, sides})
+              onChange({...chico, sides: sides.length > 0 ? sides : undefined})
             }}
             className="w-full"
           >
@@ -337,22 +362,11 @@ function ChicoControls({
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
-          {chico.sides.length > 1 && (
+          {sideCount > 1 && (
             <p className="text-muted-foreground text-xs">
               With more than one side picked, Chico shows up on one of them at
               random (separate from the random position option below).
             </p>
-          )}
-          {(chico.random || chico.sides.length > 1) && (
-            <Button
-              variant="outline"
-              size="xs"
-              className="self-start"
-              onClick={onShuffle}
-            >
-              <Shuffle className="size-3" />
-              Shuffle Live Preview
-            </Button>
           )}
         </Field>
 
@@ -366,7 +380,7 @@ function ChicoControls({
         {!chico.random && (
           <PercentSlider
             label="Position"
-            value={chico.pos}
+            value={chico.pos ?? roll.pos}
             min={0}
             max={100}
             onChange={(pos) => onChange({...chico, pos})}
@@ -375,7 +389,7 @@ function ChicoControls({
 
         <PercentSlider
           label="Size"
-          value={chico.size}
+          value={size}
           min={MIN_CHICO_SIZE}
           max={MAX_CHICO_SIZE}
           onChange={(size) => onChange({...chico, size})}
@@ -388,10 +402,10 @@ function ChicoControls({
           onClick={() =>
             onChange({
               ...chico,
-              sides: [...DEFAULT_CHICO_SIDES],
+              sides: undefined,
               random: false,
-              pos: DEFAULT_CHICO_POS,
-              size: DEFAULT_CHICO_SIZE
+              pos: undefined,
+              size: undefined
             })
           }
         >
@@ -583,6 +597,35 @@ function PreviewPane({
         <span className="font-medium">Preview</span> for the true result.
       </p>
     </div>
+  )
+}
+
+/** Fades in/out with `chico.show`, so it's only offered when there's a Chico to shuffle. */
+function ShuffleButton({
+  show,
+  onShuffle
+}: {
+  show: boolean
+  onShuffle: () => void
+}) {
+  return (
+    <AnimatePresence mode="popLayout">
+      {show && (
+        <motion.div
+          layout
+          initial={{opacity: 0, y: -8}}
+          animate={{opacity: 1, y: 0}}
+          exit={{opacity: 0, y: -8}}
+          transition={{duration: 0.2}}
+          className="self-start"
+        >
+          <Button variant="outline" size="xs" onClick={onShuffle}>
+            <Shuffle className="size-3.5" />
+            Shuffle Chico
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 

@@ -5,22 +5,29 @@
  * renders identically in both places. He sits *behind* the caption (the caption
  * pill is `z-10`; Chico is unlayered), so enabling both keeps the caption on top.
  *
- * Only one Chico ever shows at a time. `sides` is the set of edges he's allowed
- * to sit on — with one side picked, he sits there; with two or more, one is
- * chosen at random each time the config changes (a side-selection roll, kept
- * separate from the `random`-position roll below).
+ * Only one Chico ever shows at a time. Which *photo* shows is picked at random
+ * from {@link CHICO_VARIANTS} — each request/shuffle draws fresh, the same way
+ * the side/position rolls below already work — since photos, like sides, are a
+ * candidate space rather than a URL-shareable setting. Each variant carries its
+ * own natural resting spot (edge, position, size), used whenever the URL/config
+ * doesn't explicitly override that setting. `sides` is the set of edges he's
+ * allowed to sit on — with one side picked, he sits there; with two or more,
+ * one is chosen at random each time the config changes (a side-selection roll,
+ * kept separate from the `random`-position roll below).
  *
  * URL params (all optional):
  *   chico=true            show Chico at all (anything else hides him)
  *   chicoSides=bottom,left  candidate edges, comma-separated — one is picked
  *                           at random when more than one is listed
- *                           (default `bottom`; unknown values are dropped)
+ *                           (default: the picked photo's own edge; unknown
+ *                           values are dropped)
  *   chicoRandom=true      randomize Chico's position along whichever edge is
  *                         picked; the `chicoPos` slider is ignored (default false)
  *   chicoPos=<0-100>      percent along the edge's axis, centered on the point
- *                         (default 50; ignored when chicoRandom=true)
+ *                         (default: the picked photo's own position; ignored
+ *                         when chicoRandom=true)
  *   chicoSize=<5-60>      size as a percent of the frame's shorter side
- *                         (default 25)
+ *                         (default: the picked photo's own size)
  */
 import type {CSSProperties} from 'react'
 
@@ -35,46 +42,67 @@ export const CHICO_SIDES: readonly ChicoSide[] = [
 ]
 
 /**
- * The Chico photos, in a stable order. Add more here over time — the array is
- * the only place that needs to change to grow the roster. Use transparent PNGs
- * (JPG has no alpha channel), so Chico cuts out cleanly over the photo.
+ * One Chico photo and the resting spot it was shot/cropped for — its own
+ * intrinsic pixel size (also `next/image`'s required width/height) and the
+ * edge/position/size it defaults to when nothing in the URL/config overrides
+ * that setting. A photo posed hanging down from the top, for instance, would
+ * set `side: 'top'` here rather than relying on a bottom-posed photo getting
+ * rotated onto the top edge.
  */
-export const CHICO_IMAGES = [
-  'https://ikytztnux2hjbem7.public.blob.vercel-storage.com/Chico_1.png'
-] as const
+export interface ChicoVariant {
+  url: string
+  width: number
+  height: number
+  side: ChicoSide
+  pos: number
+  size: number
+}
 
 /**
- * The roster's intrinsic pixel size — used both as `next/image`'s required
- * width/height and to compute how tall he renders relative to his width (see
- * {@link CHICO_ASPECT}). He's not perfectly square, which matters once he's
- * rotated onto the left/right edges.
+ * The Chico roster, in a stable order. Add more here over time — this array is
+ * the only place that needs to change to grow it. Use transparent PNGs (JPG
+ * has no alpha channel), so Chico cuts out cleanly over the photo.
  */
-export const CHICO_IMAGE_WIDTH = 1797
-export const CHICO_IMAGE_HEIGHT = 1673
-
-/** Height/width ratio at his natural, upright size. */
-const CHICO_ASPECT = CHICO_IMAGE_HEIGHT / CHICO_IMAGE_WIDTH
-
-/** Sensible defaults: hidden, sitting on the bottom edge, left corner, mid-size. */
-export const DEFAULT_CHICO_SIDES: ChicoSide[] = ['bottom']
-export const DEFAULT_CHICO_POS = 15
+export const CHICO_VARIANTS: readonly ChicoVariant[] = [
+  {
+    url: 'https://ikytztnux2hjbem7.public.blob.vercel-storage.com/Chico_1.png',
+    width: 1797,
+    height: 1673,
+    side: 'bottom',
+    pos: 15,
+    size: 25
+  },
+  {
+    url: 'https://ikytztnux2hjbem7.public.blob.vercel-storage.com/Chico_2.png',
+    width: 2056,
+    height: 2330,
+    side: 'top',
+    pos: 15,
+    size: 25
+  }
+]
 
 /** Size clamp (percent of the frame's shorter side), so a hand-edited URL stays sane. */
-export const DEFAULT_CHICO_SIZE = 25
 export const MIN_CHICO_SIZE = 5
 export const MAX_CHICO_SIZE = 60
 
-/** The normalized, validated Chico configuration. */
+/**
+ * The normalized, validated Chico configuration. `sides`/`pos`/`size` are
+ * `undefined` when not explicitly set (by the URL or a playground edit) — that
+ * means "use whichever photo gets picked's own default," resolved via
+ * {@link resolvedChicoSides}/{@link resolvedChicoPos}/{@link resolvedChicoSize}
+ * once a {@link ChicoVariant} is known.
+ */
 export interface ChicoConfig {
   show: boolean
-  /** Candidate edges; one is picked (at random, if there's more than one). Never empty. */
-  sides: ChicoSide[]
+  /** Candidate edges; one is picked (at random, if there's more than one). */
+  sides?: ChicoSide[]
   /** Randomize position along the picked edge, ignoring `pos`. Defaults to false. */
   random: boolean
   /** Percent (0-100) along the picked edge's axis, centered on the point. */
-  pos: number
+  pos?: number
   /** Size as a percent (5-60) of the frame's shorter side. */
-  size: number
+  size?: number
 }
 
 /** The raw search params we read, as delivered by Next's `searchParams`. */
@@ -90,27 +118,27 @@ function isSide(value: string): value is ChicoSide {
   return (CHICO_SIDES as readonly string[]).includes(value)
 }
 
-/** Parse a comma-separated side list, dropping unknowns, falling back to the default. */
-function parseSides(value: string | undefined): ChicoSide[] {
-  if (!value) return [...DEFAULT_CHICO_SIDES]
+/** Parse a comma-separated side list, dropping unknowns; `undefined` if none given. */
+function parseSides(value: string | undefined): ChicoSide[] | undefined {
+  if (!value) return undefined
   const sides = value
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(isSide)
-  // De-dupe while preserving order; never hand back an empty list.
+  // De-dupe while preserving order.
   const unique = [...new Set(sides)]
-  return unique.length > 0 ? unique : [...DEFAULT_CHICO_SIDES]
+  return unique.length > 0 ? unique : undefined
 }
 
-/** Parse a clamped percentage, falling back to a default. */
+/** Parse a clamped percentage; `undefined` if not given. */
 function parsePercent(
   value: string | undefined,
-  fallback: number,
   min: number,
   max: number
-): number {
+): number | undefined {
+  if (value === undefined) return undefined
   const n = Number(value)
-  if (!Number.isFinite(n)) return fallback
+  if (!Number.isFinite(n)) return undefined
   return Math.min(max, Math.max(min, Math.round(n)))
 }
 
@@ -120,22 +148,33 @@ export function parseChicoParams(params: ChicoParams = {}): ChicoConfig {
     show: params.chico?.toLowerCase() === 'true',
     sides: parseSides(params.chicoSides),
     random: params.chicoRandom?.toLowerCase() === 'true',
-    pos: parsePercent(params.chicoPos, DEFAULT_CHICO_POS, 0, 100),
-    size: parsePercent(
-      params.chicoSize,
-      DEFAULT_CHICO_SIZE,
-      MIN_CHICO_SIZE,
-      MAX_CHICO_SIZE
-    )
+    pos: parsePercent(params.chicoPos, 0, 100),
+    size: parsePercent(params.chicoSize, MIN_CHICO_SIZE, MAX_CHICO_SIZE)
   }
 }
 
-/** Whether a side list differs from the default (order-insensitive). */
-function sidesAreDefault(sides: ChicoSide[]): boolean {
-  return (
-    sides.length === DEFAULT_CHICO_SIDES.length &&
-    DEFAULT_CHICO_SIDES.every((s) => sides.includes(s))
-  )
+/** The edges Chico is allowed to sit on, falling back to the picked photo's own edge. */
+export function resolvedChicoSides(
+  config: ChicoConfig,
+  variant: ChicoVariant
+): ChicoSide[] {
+  return config.sides && config.sides.length > 0 ? config.sides : [variant.side]
+}
+
+/** Chico's position, falling back to the picked photo's own position. */
+export function resolvedChicoPos(
+  config: ChicoConfig,
+  variant: ChicoVariant
+): number {
+  return config.pos ?? variant.pos
+}
+
+/** Chico's size, falling back to the picked photo's own size. */
+export function resolvedChicoSize(
+  config: ChicoConfig,
+  variant: ChicoVariant
+): number {
+  return config.size ?? variant.size
 }
 
 /** Serialize a config back into a query string (e.g. for the "copy URL" box). */
@@ -143,20 +182,21 @@ export function chicoParamsToQuery(config: ChicoConfig): string {
   const q = new URLSearchParams()
   if (!config.show) return ''
   q.set('chico', 'true')
-  if (!sidesAreDefault(config.sides))
+  if (config.sides && config.sides.length > 0) {
     q.set('chicoSides', config.sides.join(','))
+  }
   if (config.random) q.set('chicoRandom', 'true')
   // `pos` is meaningless while random, so only serialize it otherwise.
-  if (!config.random && config.pos !== DEFAULT_CHICO_POS) {
+  if (!config.random && config.pos !== undefined) {
     q.set('chicoPos', String(config.pos))
   }
-  if (config.size !== DEFAULT_CHICO_SIZE)
-    q.set('chicoSize', String(config.size))
+  if (config.size !== undefined) q.set('chicoSize', String(config.size))
   return q.toString()
 }
 
-/** A resolved Chico instance: the one side he's on, and how far along it. */
+/** A resolved Chico instance: which photo, which side he's on, and how far along it. */
 export interface ChicoRoll {
+  variant: number
   side: ChicoSide
   pos: number
 }
@@ -175,9 +215,23 @@ export function pickChicoSide(
   sides: ChicoSide[],
   exclude?: ChicoSide
 ): ChicoSide {
-  if (sides.length <= 1) return sides[0] ?? DEFAULT_CHICO_SIDES[0]
+  if (sides.length <= 1) return sides[0] ?? CHICO_VARIANTS[0].side
   const candidates = exclude ? sides.filter((s) => s !== exclude) : sides
   const pool = candidates.length > 0 ? candidates : sides
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+/**
+ * Pick which photo Chico shows as, the same way {@link pickChicoSide} picks a
+ * side: at random across the whole roster, excluding `exclude` when there's
+ * another option so a forced re-roll always changes something visible.
+ */
+export function pickChicoVariant(exclude?: number): number {
+  if (CHICO_VARIANTS.length <= 1) return 0
+  const indexes = CHICO_VARIANTS.map((_, i) => i)
+  const candidates =
+    exclude === undefined ? indexes : indexes.filter((i) => i !== exclude)
+  const pool = candidates.length > 0 ? candidates : indexes
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -188,22 +242,37 @@ export function rollChicoPosition(): number {
 
 /**
  * Resolve a config into one {@link ChicoRoll}, rolling only the parts that are
- * actually random: the side (if multiple are candidates) and the position (if
- * `config.random` is on). Callers own when this runs so a render stays
- * deterministic — the live page rolls once per request; the playground rolls
- * from state, only on the interactions that should produce a new look.
+ * actually random: which photo (see {@link pickChicoVariant}), the side (if
+ * multiple are candidates), and the position (if `config.random` is on).
+ * Callers own when this runs so a render stays deterministic — the live page
+ * rolls once per request; the playground rolls from state, only on the
+ * interactions that should produce a new look.
  *
  * `previous`, if given, is the roll currently on screen — its side is excluded
- * from the redraw (see {@link pickChicoSide}) so re-rolling always changes
- * something visible.
+ * from the redraw (see {@link pickChicoSide}), and its photo is kept as-is
+ * unless `rerollVariant` is set — so incidental config edits (e.g. dragging
+ * the size slider) don't secretly swap the photo out from under the side/pos
+ * roll, while an explicit reroll (e.g. the playground's Shuffle button) can
+ * still draw a fresh one.
  */
 export function rollChico(
   config: ChicoConfig,
-  previous?: ChicoRoll
+  previous?: ChicoRoll,
+  {rerollVariant = previous === undefined}: {rerollVariant?: boolean} = {}
 ): ChicoRoll {
+  const variant = rerollVariant
+    ? pickChicoVariant(previous?.variant)
+    : (previous?.variant ?? pickChicoVariant())
+  const resolvedVariant = CHICO_VARIANTS[variant]
   return {
-    side: pickChicoSide(config.sides, previous?.side),
-    pos: config.random ? rollChicoPosition() : config.pos
+    variant,
+    side: pickChicoSide(
+      resolvedChicoSides(config, resolvedVariant),
+      previous?.side
+    ),
+    pos: config.random
+      ? rollChicoPosition()
+      : resolvedChicoPos(config, resolvedVariant)
   }
 }
 
@@ -234,11 +303,11 @@ function rotationForSide(side: ChicoSide): number {
  *   once rotated.
  * - `art`: centered inside `box` at his natural upright size, then rotated.
  *
- * Splitting these is what keeps him flush with the edge on left/right: he's
- * not quite square (see {@link CHICO_ASPECT}), so a single rotated element
- * would leave a gap between the rotated content and the edge it's anchored
- * to — rotating a box doesn't change the box's own (still-upright) layout
- * size, only how its content is painted inside it.
+ * Splitting these is what keeps him flush with the edge on left/right: a
+ * variant's photo isn't necessarily square (see its `height`/`width`), so a
+ * single rotated element would leave a gap between the rotated content and
+ * the edge it's anchored to — rotating a box doesn't change the box's own
+ * (still-upright) layout size, only how its content is painted inside it.
  */
 export interface ChicoPlacement {
   box: CSSProperties
@@ -247,11 +316,13 @@ export interface ChicoPlacement {
 
 export function chicoPlacement(
   {side, pos}: ChicoRoll,
-  size: number
+  size: number,
+  variant: ChicoVariant
 ): ChicoPlacement {
+  const aspect = variant.height / variant.width
   const rotated = side === 'left' || side === 'right'
-  const width = rotated ? size * CHICO_ASPECT : size
-  const height = rotated ? size : size * CHICO_ASPECT
+  const width = rotated ? size * aspect : size
+  const height = rotated ? size : size * aspect
 
   const box: CSSProperties = {
     position: 'absolute',
@@ -294,7 +365,7 @@ export function chicoPlacement(
     top: '50%',
     left: '50%',
     width: `${size}cqmin`,
-    height: `${size * CHICO_ASPECT}cqmin`,
+    height: `${size * aspect}cqmin`,
     transform: `translate(-50%, -50%) rotate(${rotationForSide(side)}deg)`
   }
 
