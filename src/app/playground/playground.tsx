@@ -16,10 +16,10 @@ import {Caption} from '@/components/caption'
 import {Chico} from '@/components/chico'
 import {
   Accordion,
-  AccordionContent,
   AccordionItem,
+  AccordionPanel,
   AccordionTrigger
-} from '@/components/Accordion'
+} from '@/components/animate-ui/components/base/accordion'
 import {CopyButton} from '@/components/CopyButton'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
@@ -299,17 +299,19 @@ function Controls({
           </fieldset>
         </Section>
 
-        <Accordion className="-mt-2 rounded-none border-0">
-          <AccordionItem value="chico" className="data-open:bg-transparent">
-            <AccordionTrigger className="-mx-2 p-2">Advanced</AccordionTrigger>
-            <AccordionContent className="px-0 pt-4">
+        <Accordion className="-mt-2">
+          <AccordionItem value="chico" className="border-b-0">
+            <AccordionTrigger className="-mx-2 px-2 py-0">
+              Advanced
+            </AccordionTrigger>
+            <AccordionPanel className="pt-4 pb-0">
               <ChicoControls
                 chico={chico}
                 roll={chicoRoll}
                 size={chicoSize}
                 onChange={onChicoChange}
               />
-            </AccordionContent>
+            </AccordionPanel>
           </AccordionItem>
         </Accordion>
       </CardContent>

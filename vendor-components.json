@@ -61,6 +61,17 @@
         "src/components/animate-ui/primitives/animate/slot.tsx",
         "src/hooks/use-controlled-state.tsx"
       ]
+    },
+    {
+      "name": "base-accordion",
+      "spec": "@animate-ui/components-base-accordion",
+      "source": "animate-ui",
+      "paths": [
+        "src/components/animate-ui/components/base/accordion.tsx",
+        "src/components/animate-ui/primitives/base/accordion.tsx",
+        "src/lib/get-strict-context.tsx",
+        "src/hooks/use-controlled-state.tsx"
+      ]
     }
   ]
 }

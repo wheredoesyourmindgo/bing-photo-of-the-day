@@ -20,7 +20,8 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     'src/components/ui/**', // Ignore shadcn/ui components
     'src/components/animate-ui/**', // Ignore animate-ui components
-    'src/hooks/use-controlled-state.tsx' // Vendored hook bundled with animate-ui components
+    'src/hooks/use-controlled-state.tsx', // Vendored hook bundled with animate-ui components
+    'src/lib/get-strict-context.tsx' // Vendored helper bundled with animate-ui components
   ]),
   ...nextTs,
   ...nextVitals,
