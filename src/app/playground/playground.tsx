@@ -224,6 +224,11 @@ function Controls({
   chicoSize: number
   onChicoChange: (next: ChicoConfig) => void
 }) {
+  const placementIsDefault =
+    config.corner === DEFAULT_CORNER &&
+    config.x === DEFAULT_OFFSET &&
+    config.y === DEFAULT_OFFSET
+
   return (
     <Card className="h-fit">
       <CardHeader>
@@ -279,6 +284,7 @@ function Controls({
               variant="ghost"
               size="sm"
               className="-ml-2 self-start"
+              disabled={placementIsDefault}
               onClick={() =>
                 onChange({
                   ...config,
@@ -324,6 +330,12 @@ function ChicoControls({
   onChange: (next: ChicoConfig) => void
 }) {
   const sideCount = chico.sides?.length ?? 0
+  const isDev = process.env.NODE_ENV === 'development'
+  const chicoIsDefault =
+    chico.sides === undefined &&
+    !chico.random &&
+    chico.pos === undefined &&
+    chico.size === undefined
   return (
     <Section title="Chico">
       <ToggleRow
@@ -337,54 +349,61 @@ function ChicoControls({
         className="flex flex-col gap-4 disabled:opacity-50"
         disabled={!chico.show}
       >
-        <Field label="Sides">
-          <ToggleGroup
-            variant="outline"
-            spacing={0}
-            multiple
-            value={chico.sides ?? [roll.side]}
-            onValueChange={(value) => {
-              // An empty selection reverts to "auto" — whichever photo is
-              // showing uses its own default edge.
-              const sides = value as ChicoSide[]
-              onChange({...chico, sides: sides.length > 0 ? sides : undefined})
-            }}
-            className="w-full"
-          >
-            {SIDE_OPTIONS.map(({value, label}) => (
-              <ToggleGroupItem
-                key={value}
-                value={value}
-                aria-label={label}
-                className="flex-1"
+        {isDev && (
+          <>
+            <Field label="Sides">
+              <ToggleGroup
+                variant="outline"
+                spacing={0}
+                multiple
+                value={chico.sides ?? [roll.side]}
+                onValueChange={(value) => {
+                  // An empty selection reverts to "auto" — whichever photo is
+                  // showing uses its own default edge.
+                  const sides = value as ChicoSide[]
+                  onChange({
+                    ...chico,
+                    sides: sides.length > 0 ? sides : undefined
+                  })
+                }}
+                className="w-full"
               >
-                <span className="text-xs">{label}</span>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          {sideCount > 1 && (
-            <p className="text-muted-foreground text-xs">
-              With more than one side picked, Chico shows up on one of them at
-              random (separate from the random position option below).
-            </p>
-          )}
-        </Field>
+                {SIDE_OPTIONS.map(({value, label}) => (
+                  <ToggleGroupItem
+                    key={value}
+                    value={value}
+                    aria-label={label}
+                    className="flex-1"
+                  >
+                    <span className="text-xs">{label}</span>
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+              {sideCount > 1 && (
+                <p className="text-muted-foreground text-xs">
+                  With more than one side picked, Chico shows up on one of them
+                  at random (separate from the random position option below).
+                </p>
+              )}
+            </Field>
 
-        <ToggleRow
-          id="chico-random"
-          label="Random position"
-          checked={chico.random}
-          onChange={(random) => onChange({...chico, random})}
-        />
+            <ToggleRow
+              id="chico-random"
+              label="Random position"
+              checked={chico.random}
+              onChange={(random) => onChange({...chico, random})}
+            />
 
-        {!chico.random && (
-          <PercentSlider
-            label="Position"
-            value={chico.pos ?? roll.pos}
-            min={0}
-            max={100}
-            onChange={(pos) => onChange({...chico, pos})}
-          />
+            {!chico.random && (
+              <PercentSlider
+                label="Position"
+                value={chico.pos ?? roll.pos}
+                min={0}
+                max={100}
+                onChange={(pos) => onChange({...chico, pos})}
+              />
+            )}
+          </>
         )}
 
         <PercentSlider
@@ -399,6 +418,7 @@ function ChicoControls({
           variant="ghost"
           size="sm"
           className="-ml-2 self-start"
+          disabled={chicoIsDefault}
           onClick={() =>
             onChange({
               ...chico,
