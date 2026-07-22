@@ -3,8 +3,8 @@ import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import nextVitals from 'eslint-config-next/core-web-vitals'
 import nextTs from 'eslint-config-next/typescript'
-import prettierRecommended from 'eslint-plugin-prettier/recommended'
 import tailwind from 'eslint-plugin-tailwindcss'
+import prettierConfig from 'eslint-config-prettier'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -25,7 +25,6 @@ const eslintConfig = defineConfig([
   ]),
   ...nextTs,
   ...nextVitals,
-  prettierRecommended,
   // eslint-plugin-tailwindcss v4 exposes a single flat-config object at
   // `configs.recommended` (the v3 `configs['flat/recommended']` array is gone)
   tailwind.configs.recommended,
@@ -49,9 +48,7 @@ const eslintConfig = defineConfig([
     rules: {
       camelcase: 'off',
       radix: 'warn',
-      'linebreak-style': ['error', 'unix'],
       'no-console': 'off',
-      'prettier/prettier': 'warn',
       'react/no-unescaped-entities': 'off',
       'react/self-closing-comp': 'warn',
       'react-hooks/rules-of-hooks': 'error',
@@ -82,7 +79,8 @@ const eslintConfig = defineConfig([
         }
       ]
     }
-  }
+  },
+  prettierConfig
 ])
 
 export default eslintConfig
